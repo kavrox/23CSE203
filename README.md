@@ -14,8 +14,8 @@ javac -d out $javaFiles
 - `LinkedLists`: singly and doubly linked lists.
 - `Stacks`: array-backed and linked-list-backed stacks.
 - `Queues`: circular-array and linked-list-backed queues.
-- `PriorityQueues`: binary min-heap and priority queues backed by sorted arrays, unsorted arrays, a sorted doubly linked list, and a binary search tree. `locator` contains the locator-based sorted-array priority queue.
-- `Trees`: general binary tree and binary search tree.
+- `PriorityQueues`: binary min-heaps and priority queues backed by sorted/unsorted arrays, sorted/unsorted doubly linked lists, and unbalanced/balanced binary search trees. `locator` contains the locator-based sorted-array priority queue.
+- `Trees`: general binary tree (including tree operations, metrics, and structural checks) and binary search tree.
 
 ## Algorithms
 
