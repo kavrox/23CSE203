@@ -1,6 +1,8 @@
 package Graphs.adjacencylist;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.PriorityQueue;
 import java.util.Queue;
 
 // ===================== 2) ADJACENCY LIST =====================
@@ -54,13 +56,20 @@ class Edge
     private vertex origin;
     private vertex dest;
     private int position;
+    private int weight;
 
     Edge(String e, vertex o, vertex d, int p)
+    {
+        this(e, o, d, p, 1);
+    }
+
+    Edge(String e, vertex o, vertex d, int p, int weight)
     {
         element = e;
         origin = o;
         dest = d;
         position = p;
+        this.weight = weight;
     }
 
     // set and get methods
@@ -69,6 +78,7 @@ class Edge
     public vertex getDest()         { return dest; }
     public int getPosition()        { return position; }
     public void setPosition(int p)  { position = p; }
+    public int getWeight()          { return weight; }
     public String toString()        { return element; }
 }
 
@@ -178,9 +188,14 @@ public class AdjacencyListGraph
 
     public Edge insertEdge(vertex u, vertex v1, String x)
     {
+        return insertEdge(u, v1, x, 1);
+    }
+
+    public Edge insertEdge(vertex u, vertex v1, String x, int weight)
+    {
         if (ecount == e.length || getEdge(u, v1) != null)
             return null;
-        Edge e1 = new Edge(x, u, v1, ecount);
+        Edge e1 = new Edge(x, u, v1, ecount, weight);
         e[ecount++] = e1;
         u.addEdge(e1);
         v1.addEdge(e1);
@@ -271,6 +286,112 @@ public class AdjacencyListGraph
                 dfsHelper(neighbor, visited);
             }
         }
+    }
+
+    public boolean hasPathBfs(vertex start, vertex destination)
+    {
+        if (!containsVertex(start) || !containsVertex(destination))
+            return false;
+
+        boolean[] visited = new boolean[vcount];
+        Queue<vertex> queue = new LinkedList<>();
+        visited[start.getPosition()] = true;
+        queue.add(start);
+
+        while (!queue.isEmpty())
+        {
+            vertex current = queue.poll();
+            if (current == destination)
+                return true;
+
+            for (Edge edge : outgoingEdges(current))
+            {
+                vertex neighbor = opposite(current, edge);
+                if (neighbor != null && !visited[neighbor.getPosition()])
+                {
+                    visited[neighbor.getPosition()] = true;
+                    queue.add(neighbor);
+                }
+            }
+        }
+        return false;
+    }
+
+    public vertex[] findPathDfs(vertex start, vertex destination)
+    {
+        if (!containsVertex(start) || !containsVertex(destination))
+            return new vertex[0];
+
+        boolean[] visited = new boolean[vcount];
+        ArrayList<vertex> path = new ArrayList<>();
+        if (!findPathDfs(start, destination, visited, path))
+            return new vertex[0];
+        return path.toArray(new vertex[0]);
+    }
+
+    private boolean findPathDfs(vertex current, vertex destination, boolean[] visited,
+                                ArrayList<vertex> path)
+    {
+        visited[current.getPosition()] = true;
+        path.add(current);
+        if (current == destination)
+            return true;
+
+        for (Edge edge : outgoingEdges(current))
+        {
+            vertex neighbor = opposite(current, edge);
+            if (neighbor != null && !visited[neighbor.getPosition()]
+                    && findPathDfs(neighbor, destination, visited, path))
+                return true;
+        }
+        path.remove(path.size() - 1);
+        return false;
+    }
+
+    public Edge[] primMst(vertex start)
+    {
+        if (!containsVertex(start))
+            return new Edge[0];
+
+        boolean[] inTree = new boolean[vcount];
+        ArrayList<Edge> mst = new ArrayList<>();
+        PriorityQueue<Edge> candidates = new PriorityQueue<>(
+                (first, second) -> Integer.compare(first.getWeight(), second.getWeight()));
+        inTree[start.getPosition()] = true;
+        addCrossingEdges(start, inTree, candidates);
+
+        while (!candidates.isEmpty())
+        {
+            Edge edge = candidates.poll();
+            boolean originInTree = inTree[edge.getOrigin().getPosition()];
+            boolean destInTree = inTree[edge.getDest().getPosition()];
+            if (originInTree == destInTree)
+                continue;
+
+            vertex next = originInTree ? edge.getDest() : edge.getOrigin();
+            mst.add(edge);
+            inTree[next.getPosition()] = true;
+            addCrossingEdges(next, inTree, candidates);
+        }
+        return mst.toArray(new Edge[0]);
+    }
+
+    private void addCrossingEdges(vertex current, boolean[] inTree,
+                                  PriorityQueue<Edge> candidates)
+    {
+        for (Edge edge : outgoingEdges(current))
+        {
+            vertex neighbor = opposite(current, edge);
+            if (neighbor != null && !inTree[neighbor.getPosition()])
+                candidates.add(edge);
+        }
+    }
+
+    private boolean containsVertex(vertex candidate)
+    {
+        return candidate != null && candidate.getPosition() >= 0
+                && candidate.getPosition() < vcount
+                && v[candidate.getPosition()] == candidate;
     }
 
     public static void main(String[] args)

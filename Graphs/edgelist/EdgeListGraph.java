@@ -1,5 +1,8 @@
 package Graphs.edgelist;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -27,13 +30,20 @@ class Edge
     private vertex origin;
     private vertex dest;
     private int position;
+    private int weight;
 
     Edge(String e, vertex o, vertex d, int p)
+    {
+        this(e, o, d, p, 1);
+    }
+
+    Edge(String e, vertex o, vertex d, int p, int weight)
     {
         element = e;
         origin = o;
         dest = d;
         position = p;
+        this.weight = weight;
     }
 
     // set and get methods
@@ -42,6 +52,7 @@ class Edge
     public vertex getDest()         { return dest; }
     public int getPosition()        { return position; }
     public void setPosition(int p)  { position = p; }
+    public int getWeight()          { return weight; }
     public String toString()        { return element; }
 }
 
@@ -160,9 +171,14 @@ public class EdgeListGraph
 
     public Edge insertEdge(vertex u, vertex v1, String x)
     {
+        return insertEdge(u, v1, x, 1);
+    }
+
+    public Edge insertEdge(vertex u, vertex v1, String x, int weight)
+    {
         if (ecount == e.length || getEdge(u, v1) != null)
             return null;
-        Edge e1 = new Edge(x, u, v1, ecount);
+        Edge e1 = new Edge(x, u, v1, ecount, weight);
         e[ecount++] = e1;
         return e1;
     }
@@ -255,6 +271,113 @@ public class EdgeListGraph
             {
                 dfsHelper(neighbor, visited);
             }
+        }
+    }
+
+    public Edge[] kruskalMst()
+    {
+        if (vcount < 2)
+            return new Edge[0];
+
+        Edge[] sortedEdges = edges();
+        Arrays.sort(sortedEdges, Comparator.comparingInt(Edge::getWeight)
+                .thenComparingInt(Edge::getPosition));
+
+        DisjointSet components = new DisjointSet(vcount);
+        ArrayList<Edge> mst = new ArrayList<>();
+        for (Edge edge : sortedEdges)
+        {
+            if (components.union(edge.getOrigin().getPosition(), edge.getDest().getPosition()))
+                mst.add(edge);
+            if (mst.size() == vcount - 1)
+                break;
+        }
+        return mst.toArray(new Edge[0]);
+    }
+
+    public Edge[] boruvkaMst()
+    {
+        if (vcount < 2)
+            return new Edge[0];
+
+        DisjointSet components = new DisjointSet(vcount);
+        ArrayList<Edge> mst = new ArrayList<>();
+        while (mst.size() < vcount - 1)
+        {
+            Edge[] cheapest = new Edge[vcount];
+            for (int i = 0; i < ecount; i++)
+            {
+                Edge edge = e[i];
+                int originRoot = components.find(edge.getOrigin().getPosition());
+                int destRoot = components.find(edge.getDest().getPosition());
+                if (originRoot == destRoot)
+                    continue;
+
+                if (isCheaper(edge, cheapest[originRoot]))
+                    cheapest[originRoot] = edge;
+                if (isCheaper(edge, cheapest[destRoot]))
+                    cheapest[destRoot] = edge;
+            }
+
+            boolean merged = false;
+            for (Edge edge : cheapest)
+            {
+                if (edge != null && components.union(
+                        edge.getOrigin().getPosition(), edge.getDest().getPosition()))
+                {
+                    mst.add(edge);
+                    merged = true;
+                }
+            }
+            if (!merged)
+                break;
+        }
+        return mst.toArray(new Edge[0]);
+    }
+
+    private boolean isCheaper(Edge candidate, Edge current)
+    {
+        return current == null || candidate.getWeight() < current.getWeight()
+                || (candidate.getWeight() == current.getWeight()
+                && candidate.getPosition() < current.getPosition());
+    }
+
+    private static final class DisjointSet
+    {
+        private final int[] parent;
+        private final int[] rank;
+
+        private DisjointSet(int size)
+        {
+            parent = new int[size];
+            rank = new int[size];
+            for (int i = 0; i < size; i++)
+                parent[i] = i;
+        }
+
+        private int find(int value)
+        {
+            if (parent[value] != value)
+                parent[value] = find(parent[value]);
+            return parent[value];
+        }
+
+        private boolean union(int first, int second)
+        {
+            int firstRoot = find(first);
+            int secondRoot = find(second);
+            if (firstRoot == secondRoot)
+                return false;
+            if (rank[firstRoot] < rank[secondRoot])
+                parent[firstRoot] = secondRoot;
+            else if (rank[firstRoot] > rank[secondRoot])
+                parent[secondRoot] = firstRoot;
+            else
+            {
+                parent[secondRoot] = firstRoot;
+                rank[firstRoot]++;
+            }
+            return true;
         }
     }
 

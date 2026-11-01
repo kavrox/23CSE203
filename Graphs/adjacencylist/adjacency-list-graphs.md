@@ -1,6 +1,6 @@
 # Adjacency-list graph ADT
 
-`Graphs.adjacencylist.AdjacencyListGraph` represents an undirected graph with fixed-capacity arrays of vertices and edges. Each vertex stores its own incident-edge array sized to the graph's edge capacity. The graph avoids parallel edges by checking the source vertex's adjacency list before insertion. It supports vertex/edge inspection, deletion, BFS, and DFS.
+`Graphs.adjacencylist.AdjacencyListGraph` represents an undirected graph with fixed-capacity arrays of vertices and edges. Each vertex stores its own incident-edge array sized to the graph's edge capacity. The graph avoids parallel edges by checking the source vertex's adjacency list before insertion. It supports vertex/edge inspection, deletion, BFS/DFS traversals and path queries, and Prim's minimum spanning tree algorithm. Edges inserted without a weight default to weight `1`.
 
 Let `V` and `E` be the current vertex and edge counts; `deg(v)` is the degree of vertex `v`. Traversals cover only the connected component reachable from their starting vertex. Space costs below are auxiliary, not storage already owned by the graph.
 
@@ -23,5 +23,9 @@ Let `V` and `E` be the current vertex and edge counts; `deg(v)` is the degree of
 | `bfs(start)` | Breadth-first traversal of the reachable component. | O(V + E) | O(V) |
 | `dfs(start)` | Depth-first traversal of the reachable component. | O(V + E) | O(V) recursion/visited state |
 | private `dfsHelper(vertex, visited)` | Visit a vertex and recursively traverse its incident edges. | O(V + E) over the traversal | O(V) recursion/visited state |
+| `hasPathBfs(start, destination)` | Test whether the destination is reachable from the start. | O(V + E) | O(V) |
+| `findPathDfs(start, destination)` | Return one DFS path, or an empty array when no path exists or either vertex is not in this graph. | O(V + E) | O(V) |
+| `insertEdge(u, v, element, weight)` | Insert an edge with an explicit integer weight. | O(deg(u)) | O(1) |
+| `primMst(start)` | Return a minimum spanning tree for the start vertex's connected component. | O(E log E) | O(E + V) |
 
 The `vertex`/`Edge` constructors and field accessors are O(1), except the `vertex` constructor, which allocates an `edgeCapacity`-sized adjacency array and costs O(edgeCapacity). `vertex.addEdge(edge)` is O(1); `vertex.removeEdge(edge)` searches that endpoint's incident-edge array and is O(deg(v)). Consequently, graph storage is O(vertexCapacity * edgeCapacity + edgeCapacity), even when most vertices have low degree.
